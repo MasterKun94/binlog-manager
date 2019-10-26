@@ -19,7 +19,7 @@ class EventHandler(registry: Registry) {
       for (elem <- types.indices) {
         seqBuilder += BColumn(s"col_$elem", ColumnType.byCode(types(elem)))
       }
-      BTable(data.getTable, data.getDatabase, seqBuilder.result())
+      BTable.of(data.getDatabase, data.getTable, seqBuilder.result())
     }
     Option(TableMapEvent(table, header.getTimestamp))
   }

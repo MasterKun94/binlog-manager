@@ -13,6 +13,8 @@ class Registry {
 
   def getDatabase(name: String): Option[Database] = databases.get(name)
 
+  def getDatabaseMap: Map[String, Database] = databases.toMap
+
   def getTable(databaseName: String, tableName: String): Option[BTable] = databases.get(databaseName).map(_.getTable(tableName))
 
   def getTable(tableId: Long): Option[BTable] = {
@@ -22,7 +24,7 @@ class Registry {
   def registryUnknownTable(tableId: Long, array: Array[JSerializable]): BTable = {
     val columns = new Array[BColumn](array.length)
     columns.indices.foreach(i => columns(i) = BColumn(s"col_$i", ColumnType.NULL))
-    val ukTable = BTable(s"unknown_tb_$tableId", "unknown_db", columns)
+    val ukTable = BTable.of("unknown_db", s"unknown_tb_$tableId", columns)
     unknownTables.putIfAbsent(tableId, ukTable) match {
       case Some(table) => table
       case None => ukTable
@@ -30,6 +32,7 @@ class Registry {
   }
 
   def getOrRegistry(databaseName: String, tableName: String, tableId: Long)(newTable: => BTable): BTable = {
+    println(this)
     tables.get(tableId) match {
       case Some(table) => table
       case None => databases.get(databaseName).map(_.getTable(tableName)) match {
@@ -50,8 +53,12 @@ class Registry {
     }
   }
 
+  def registryTable(table: BTable): BTable = {
+    getOrRegistry(table.databaseName, table.tableName, -1)(table)
+  }
+
   override def toString: String = {
-    databases.values.mkString("Registry(", ", ", ")")
+    databases.values.mkString("Registry[", ", ", "]")
   }
 }
 
@@ -62,10 +69,12 @@ class Database(name: String) {
 
   def getTable(name: String): BTable = tables(name)
 
+  def getTableNames: collection.Set[String] = tables.keySet
+
   def getName: String = name
 
   override def toString: String = {
-    tables.values.mkString(s"Database{$name: (", ", ", ")}")
+    tables.values.mkString(s"Database[$name: (", ", ", ")]")
   }
 }
 

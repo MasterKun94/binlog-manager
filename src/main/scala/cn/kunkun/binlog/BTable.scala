@@ -2,7 +2,9 @@ package cn.kunkun.binlog
 
 import java.io.{Serializable => JSerializable}
 
-class BTable(tbName: String, dbName: String, columns: Array[BColumn]) {
+import cn.kunkun.binlog.Statistics.Statistic
+
+class BTable(dbName: String, tbName: String, columns: Seq[BColumn], statistics: Seq[Statistic] = Seq.empty) {
 
   private lazy val inner = BRow(this)_
 
@@ -20,19 +22,25 @@ class BTable(tbName: String, dbName: String, columns: Array[BColumn]) {
 
   def getIndexByColumn(name: String): Int = map(name)
 
-  def getColumns: Array[BColumn] = columns
+  def getColumns: Seq[BColumn] = columns
+
+  def getStatistics: Seq[Statistic] = statistics
 
   def tableName: String = tbName
 
   def databaseName: String = dbName
 
   override def toString: String = {
-    columns.map(column => column.name + " " + column.columnType).mkString(s"Table{$tableName: (", ", ", ")}")
+    columns.map(column => column.name + " " + column.columnType).mkString(s"Table[($tableName: (", ", ", s"))]")
   }
 }
 
 object BTable {
-  def apply(tbName: String, dbName: String, columns: Array[BColumn]): BTable = {
-    new BTable(tbName, dbName, columns)
+  def apply(dbName: String, tbName: String)(columns: BColumn*)(statistics: Statistic*) : BTable = {
+    new BTable(dbName, tbName, columns, statistics)
+  }
+
+  def of(dbName: String, tbName: String, columns: Seq[BColumn], statistics: Seq[Statistic] = Seq.empty): BTable = {
+    new BTable(dbName, tbName, columns, statistics)
   }
 }

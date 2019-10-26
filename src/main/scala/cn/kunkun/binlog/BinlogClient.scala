@@ -57,6 +57,7 @@ class BinlogClient(bConfig: BConfig) {
   }
 
   def register(table: BTable): BinlogClient = {
+    println(table)
     registry.getOrRegistry(table.databaseName, table.tableName, -1)(table)
     this
   }

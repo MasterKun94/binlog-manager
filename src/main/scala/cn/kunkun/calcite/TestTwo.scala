@@ -1,14 +1,35 @@
 package cn.kunkun.calcite
 
-import org.apache.calcite.adapter.java.ReflectiveSchema
+import cn.kunkun.binlog._
+import com.github.shyiko.mysql.binlog.event.deserialization.ColumnType
 import org.apache.calcite.plan.RelOptUtil
-import org.apache.calcite.sql.parser.SqlParser
+import org.apache.calcite.sql.parser.{SqlParser, SqlParserUtil}
 import org.apache.calcite.tools.Frameworks
+import ImplicitUtil._
+import cn.kunkun.binlog.Statistics.PrimaryKey
+import org.apache.calcite.adapter.enumerable.EnumerableTableScan
+import org.apache.calcite.rel.externalize.RelWriterImpl
+import org.apache.calcite.rel.logical.LogicalFilter
+import org.apache.calcite.sql.SqlDialect
+import org.apache.calcite.sql.dialect.CalciteSqlDialect
 
 object TestTwo extends App {
 
+  val registry = new Registry
+
+  registry.registryTable(
+    BTable("test", "user")(
+      BColumn("id", ColumnType.LONG),
+      BColumn("name", ColumnType.VARCHAR),
+      BColumn("age", ColumnType.LONG),
+      BColumn("hobby", ColumnType.VARCHAR)
+    )(
+      PrimaryKey("id")
+    ))
+  println(registry)
+
   val schemaPlus = Frameworks.createRootSchema(true)
-  schemaPlus.add("T", new ReflectiveSchema(new TestSchema))
+  schemaPlus.registryFrom(registry)
   val frameworkConfig = Frameworks.newConfigBuilder()
     .defaultSchema(schemaPlus)
     .build()
@@ -17,13 +38,24 @@ object TestTwo extends App {
   val planner = Frameworks.getPlanner(frameworkConfig)
   val sqlNode = planner.parse(
     """
-      |select * from "T"."user"
+      |delete from "test"."user" where 'name'='kunkun'
     """.stripMargin)
 //  val sqlNode = planner.parse("select \"a\".\"s\", count(\"a\".\"s\") from \"T\".\"rdf\" \"a\" group by \"a\".\"s\"")
-
+  println(sqlNode)
+  println(sqlNode.toSqlString(CalciteSqlDialect.DEFAULT))
   planner.validate(sqlNode)
+
   val relRoot = planner.rel(sqlNode)
+  println(relRoot)
+  println(s"${relRoot.kind}, ${relRoot.rel.getCorrelVariable}")
+
   println(RelOptUtil.toString(relRoot.project()))
+
+  import scala.collection.JavaConversions._
+  println(relRoot.project().getInput(0).getInput(0).asInstanceOf[LogicalFilter].getRowType)
+  println(relRoot.project().getInput(0).getInput(0).asInstanceOf[LogicalFilter].getCondition)
+  println(relRoot.project().getInput(0).getInput(0).asInstanceOf[LogicalFilter].getCondition.getKind)
+  println(relRoot.project().getInputs.foreach(e => RelOptUtil.toString(e)))
 
   case class Triple(s: String, p: String, o: String)
 

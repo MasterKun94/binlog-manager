@@ -1,5 +1,6 @@
 package cn.kunkun
 
+import cn.kunkun.binlog.Statistics.PrimaryKey
 import cn.kunkun.binlog._
 import com.github.shyiko.mysql.binlog.event.deserialization.ColumnType
 
@@ -10,16 +11,20 @@ import com.github.shyiko.mysql.binlog.event.deserialization.ColumnType
 object Main extends App {
   BinlogClient(
     BConfig(_
-      .setHostname("192.168.10.138")
+      .setHostname("myubuntu")
       .setPassword("123456")
-      .setUsername("chenmingkun")
+      .setUsername("kunkun")
       .setPort(3306)
     ))
-    .register(BTable("user", "backuptest", Array(
-      BColumn("id", ColumnType.LONG),
-      BColumn("name", ColumnType.VARCHAR),
-      BColumn("age", ColumnType.LONG)
-    )))
+    .register(
+      BTable("test", "user")(
+        BColumn("id", ColumnType.LONG),
+        BColumn("name", ColumnType.VARCHAR),
+        BColumn("age", ColumnType.LONG),
+        BColumn("hobby", ColumnType.VARCHAR)
+      )(
+        PrimaryKey("id")
+    ))
     .addVisitor(
       new EventVisitor {
         override def visitDefault(event: Events.BEvent): Unit = println(event)

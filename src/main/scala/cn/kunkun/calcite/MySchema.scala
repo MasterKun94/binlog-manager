@@ -2,29 +2,42 @@ package cn.kunkun.calcite
 
 import java.util
 
-import com.google.common.collect.Multimap
+import cn.kunkun.binlog.Database
 import org.apache.calcite.linq4j.tree.Expression
-import org.apache.calcite.rel.`type`.RelProtoDataType
+import org.apache.calcite.rel.`type`.{RelDataType, RelDataTypeFactory, RelProtoDataType}
 import org.apache.calcite.schema
-import org.apache.calcite.schema.{Schema, SchemaPlus, SchemaVersion, Table}
-import org.apache.calcite.schema.impl.AbstractSchema
+import org.apache.calcite.schema._
+import ImplicitUtil.asCalciteTable
 
-class MySchema extends AbstractSchema {
-  override def getTableMap: util.Map[String, Table] = super.getTableMap
+import scala.collection.JavaConversions._
 
-  override def getTypeMap: util.Map[String, RelProtoDataType] = super.getTypeMap
+class MySchema(database: Database) extends Schema {
+  val functions: Map[String, schema.Function] = Map.empty.withDefaultValue(null)
+  val subSchema: Map[String, Schema] = Map.empty.withDefaultValue(null)
 
-  override def getTypeNames: util.Set[String] = super.getTypeNames
+  override def getTable(name: String): Table = database.getTable(name)
 
-  override def getType(name: String): RelProtoDataType = super.getType(name)
+  override def getTableNames: util.Set[String] = database.getTableNames
 
-  override def getExpression(parentSchema: SchemaPlus, name: String): Expression = super.getExpression(parentSchema, name)
+  override def getType(name: String): RelProtoDataType = new RelProtoDataType {
+    override def apply(factory: RelDataTypeFactory): RelDataType = getTable(name).getRowType(factory)
+  }
 
-  override def getSubSchemaMap: util.Map[String, Schema] = super.getSubSchemaMap
+  override def getTypeNames: util.Set[String] = getTableNames.map(name => getTable(name).getJdbcTableType.jdbcName)
 
-  override def isMutable: Boolean = super.isMutable
+  override def getFunctions(name: String): util.Collection[schema.Function] = functions.values //TODO
 
-  override def getFunctionMultimap: Multimap[String, schema.Function] = super.getFunctionMultimap
+  override def getFunctionNames: util.Set[String] = functions.keySet //TODO
 
-  override def snapshot(version: SchemaVersion): Schema = super.snapshot(version)
+  override def getSubSchema(name: String): Schema = subSchema(name)
+
+  override def getSubSchemaNames: util.Set[String] = subSchema.keySet
+
+  override def getExpression(parentSchema: SchemaPlus, name: String): Expression = {
+    Schemas.subSchemaExpression(parentSchema, name, classOf[MySchema])
+  }
+
+  override def isMutable: Boolean = true
+
+  override def snapshot(version: SchemaVersion): Schema = this //TODO
 }
