@@ -6,16 +6,18 @@ import scala.collection.concurrent.TrieMap
 
 import java.io.{Serializable => JSerializable}
 
-class Registry {
-  private val databases: TrieMap[String, Database] = TrieMap.empty
+import ImplicitUtil.str2Symbol
+
+class Registry(name: String) {
+  private val databases: TrieMap[Symbol, Database] = TrieMap.empty
   private val tables: TrieMap[Long, BTable] = TrieMap()
   private val unknownTables: TrieMap[Long, BTable] = TrieMap()
 
-  def getDatabase(name: String): Option[Database] = databases.get(name)
+  def getDatabase(name: Symbol): Option[Database] = databases.get(name)
 
-  def getDatabaseMap: Map[String, Database] = databases.toMap
+  def getDatabaseMap: Map[Symbol, Database] = databases.toMap
 
-  def getTable(databaseName: String, tableName: String): Option[BTable] = databases.get(databaseName).map(_.getTable(tableName))
+  def getTable(databaseName: Symbol, tableName: Symbol): Option[BTable] = databases.get(databaseName).flatMap(_.getTable(tableName))
 
   def getTable(tableId: Long): Option[BTable] = {
     tables.get(tableId).orElse(unknownTables.get(tableId))
@@ -24,18 +26,17 @@ class Registry {
   def registryUnknownTable(tableId: Long, array: Array[JSerializable]): BTable = {
     val columns = new Array[BColumn](array.length)
     columns.indices.foreach(i => columns(i) = BColumn(s"col_$i", ColumnType.NULL))
-    val ukTable = BTable.of("unknown_db", s"unknown_tb_$tableId", columns)
+    val ukTable = BTable.of('unknown_db, s"unknown_tb_$tableId", columns)
     unknownTables.putIfAbsent(tableId, ukTable) match {
       case Some(table) => table
       case None => ukTable
     }
   }
 
-  def getOrRegistry(databaseName: String, tableName: String, tableId: Long)(newTable: => BTable): BTable = {
-    println(this)
+  def getOrRegistry(databaseName: Symbol, tableName: Symbol, tableId: Long)(newTable: => BTable): BTable = {
     tables.get(tableId) match {
       case Some(table) => table
-      case None => databases.get(databaseName).map(_.getTable(tableName)) match {
+      case None => databases.get(databaseName).flatMap(_.getTable(tableName)) match {
         case Some(table) => tables.putIfAbsent(tableId, table).getOrElse(table)
         case None =>
           val newDB: Database = new Database(databaseName)
@@ -58,20 +59,26 @@ class Registry {
   }
 
   override def toString: String = {
-    databases.values.mkString("Registry[", ", ", "]")
+    databases.values.mkString(s"Registry($name)[", ", ", "]")
   }
 }
 
-class Database(name: String) {
-  private val tables: TrieMap[String, BTable] = TrieMap.empty
+object Registry {
+  lazy val default: Registry = new Registry("default")
 
-  def setTable(name: String, table: BTable): Option[BTable] = tables.putIfAbsent(name, table)
+  def DEFAULT: Registry = default
+}
 
-  def getTable(name: String): BTable = tables(name)
+class Database(name: Symbol) {
+  private val tables: TrieMap[Symbol, BTable] = TrieMap.empty
 
-  def getTableNames: collection.Set[String] = tables.keySet
+  def setTable(name: Symbol, table: BTable): Option[BTable] = tables.putIfAbsent(name, table)
 
-  def getName: String = name
+  def getTable(name: Symbol): Option[BTable] = tables.get(name)
+
+  def getTableNames: collection.Set[Symbol] = tables.keySet
+
+  def getName: Symbol = name
 
   override def toString: String = {
     tables.values.mkString(s"Database[$name: (", ", ", ")]")

@@ -17,11 +17,11 @@ object Main extends App {
       .setPort(3306)
     ))
     .register(
-      BTable("test", "user")(
-        BColumn("id", ColumnType.LONG),
-        BColumn("name", ColumnType.VARCHAR),
-        BColumn("age", ColumnType.LONG),
-        BColumn("hobby", ColumnType.VARCHAR)
+      BTable('test, 'user)(
+        BColumn('id, ColumnType.LONG),
+        BColumn('name, ColumnType.VARCHAR),
+        BColumn('age, ColumnType.LONG),
+        BColumn('hobby, ColumnType.VARCHAR)
       )(
         PrimaryKey("id")
     ))

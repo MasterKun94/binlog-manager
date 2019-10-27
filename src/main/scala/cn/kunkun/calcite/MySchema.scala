@@ -8,6 +8,7 @@ import org.apache.calcite.rel.`type`.{RelDataType, RelDataTypeFactory, RelProtoD
 import org.apache.calcite.schema
 import org.apache.calcite.schema._
 import ImplicitUtil.asCalciteTable
+import cn.kunkun.binlog.ImplicitUtil.str2Symbol
 
 import scala.collection.JavaConversions._
 
@@ -15,9 +16,9 @@ class MySchema(database: Database) extends Schema {
   val functions: Map[String, schema.Function] = Map.empty.withDefaultValue(null)
   val subSchema: Map[String, Schema] = Map.empty.withDefaultValue(null)
 
-  override def getTable(name: String): Table = database.getTable(name)
+  override def getTable(name: String): Table = database.getTable(name).get
 
-  override def getTableNames: util.Set[String] = database.getTableNames
+  override def getTableNames: util.Set[String] = database.getTableNames.map(_.name)
 
   override def getType(name: String): RelProtoDataType = new RelProtoDataType {
     override def apply(factory: RelDataTypeFactory): RelDataType = getTable(name).getRowType(factory)

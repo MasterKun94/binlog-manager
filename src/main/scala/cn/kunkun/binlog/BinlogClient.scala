@@ -10,7 +10,7 @@ import scala.collection.mutable
 
 class BinlogClient(bConfig: BConfig) {
 
-  private val registry = new Registry
+  private val registry = new Registry("registry")
   private val handler = EventHandler(registry)
   private val client = new BinaryLogClient(bConfig.getHostname, bConfig.getPort, bConfig.getSchema, bConfig.getUsername, bConfig.getPassword)
   private val visitors: mutable.Queue[EventVisitor] = mutable.Queue.empty

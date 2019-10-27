@@ -1,5 +1,6 @@
 package cn.kunkun.binlog
 
+import ImplicitUtil.str2Symbol
 import cn.kunkun.binlog.Events._
 import com.github.shyiko.mysql.binlog.event._
 import com.github.shyiko.mysql.binlog.event.deserialization.ColumnType
@@ -17,7 +18,7 @@ class EventHandler(registry: Registry) {
       val seqBuilder = Array.newBuilder[BColumn]
       val types = data.getColumnTypes
       for (elem <- types.indices) {
-        seqBuilder += BColumn(s"col_$elem", ColumnType.byCode(types(elem)))
+        seqBuilder += BColumn(Symbol(s"col_$elem"), ColumnType.byCode(types(elem)))
       }
       BTable.of(data.getDatabase, data.getTable, seqBuilder.result())
     }
@@ -30,7 +31,7 @@ class EventHandler(registry: Registry) {
 
       case None => eventRegistry.registryUnknownTable(data.getTableId, data.getRows.head)
     }
-    data.getRows.map(elems => WriteEvent(table, header.getTimestamp, table.getRow(elems)))
+    data.getRows.map(elems => WriteEvent(table, header.getTimestamp, table.generateNewRow(elems)))
   }
 
   def handleUpdate(header: EventHeader, data: UpdateRowsEventData): Traversable[BEvent] = {
@@ -39,7 +40,7 @@ class EventHandler(registry: Registry) {
 
       case None => eventRegistry.registryUnknownTable(data.getTableId, data.getRows.head.getKey)
     }
-    data.getRows.map(elems => UpdateEvent(table, header.getTimestamp, table.getRow(elems.getKey), table.getRow(elems.getValue)))
+    data.getRows.map(elems => UpdateEvent(table, header.getTimestamp, table.generateNewRow(elems.getKey), table.generateNewRow(elems.getValue)))
   }
 
   def handleDelete(header: EventHeader, data: DeleteRowsEventData): Traversable[BEvent] = {
@@ -48,7 +49,7 @@ class EventHandler(registry: Registry) {
 
       case None => eventRegistry.registryUnknownTable(data.getTableId, data.getRows.head)
     }
-    data.getRows.map(elems => DeleteEvent(table, header.getTimestamp, table.getRow(elems)))
+    data.getRows.map(elems => DeleteEvent(table, header.getTimestamp, table.generateNewRow(elems)))
   }
 
   def handleQuery(header: EventHeader, data: QueryEventData): Traversable[QueryEvent] = {

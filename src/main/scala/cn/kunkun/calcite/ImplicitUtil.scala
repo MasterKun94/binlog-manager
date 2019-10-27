@@ -11,7 +11,7 @@ object ImplicitUtil {
   implicit class MySchemaPlus(schemaPlus: SchemaPlus) {
     def registryFrom(registry: Registry): SchemaPlus = {
       for (tuple <- registry.getDatabaseMap) {
-        schemaPlus.add(tuple._1, tuple._2)
+        schemaPlus.add(tuple._1.name, tuple._2)
       }
       schemaPlus
     }

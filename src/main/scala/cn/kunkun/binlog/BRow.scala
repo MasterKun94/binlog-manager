@@ -31,33 +31,33 @@ class BRow(table: BTable, elems: Array[JSerializable]) {
 
   def getFloat(index: Int): Float = get[Float](index)
 
-  def get[T](column: String): T = getElem(column).asInstanceOf[T]
+  def get[T](column: Symbol): T = getElem(column).asInstanceOf[T]
 
-  def getString(column: String): String = get[String](column)
+  def getString(column: Symbol): String = get[String](column)
 
-  def getBytes(column: String): Array[Byte] = get[Array[Byte]](column)
+  def getBytes(column: Symbol): Array[Byte] = get[Array[Byte]](column)
 
-  def getInt(column: String): Int = get[Int](column)
+  def getInt(column: Symbol): Int = get[Int](column)
 
-  def getLong(column: String): Long = get[Int](column)
+  def getLong(column: Symbol): Long = get[Int](column)
 
-  def getBoolean(column: String): Boolean = get[Boolean](column)
+  def getBoolean(column: Symbol): Boolean = get[Boolean](column)
 
-  def getChar(column: String): Char = get[Char](column)
+  def getChar(column: Symbol): Char = get[Char](column)
 
-  def getShort(column: String): Short = get[Short](column)
+  def getShort(column: Symbol): Short = get[Short](column)
 
-  def getDouble(column: String): Double = get[Double](column)
+  def getDouble(column: Symbol): Double = get[Double](column)
 
-  def getFloat(column: String): Float = get[Float](column)
+  def getFloat(column: Symbol): Float = get[Float](column)
 
   private def getElem(index: Int): JSerializable = elems(index)
 
-  private def getElem(column: String): JSerializable = getElem(table.getIndexByColumn(column))
+  private def getElem(column: Symbol): JSerializable = getElem(table.getIndexByColumn(column))
 
   override def toString: String = {
     table.getColumns
-      .map(col => s"${col.name} ${col.columnType}")
+      .map(col => s"${col.getName} ${col.getType}")
       .mkString("Row(", ", ", ")")
   }
 

@@ -12,10 +12,11 @@ import org.apache.calcite.rel.externalize.RelWriterImpl
 import org.apache.calcite.rel.logical.LogicalFilter
 import org.apache.calcite.sql.SqlDialect
 import org.apache.calcite.sql.dialect.CalciteSqlDialect
+import cn.kunkun.binlog.ImplicitUtil.str2Symbol
 
 object TestTwo extends App {
 
-  val registry = new Registry
+  val registry = Registry.default
 
   registry.registryTable(
     BTable("test", "user")(
