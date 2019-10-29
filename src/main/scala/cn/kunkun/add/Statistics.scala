@@ -1,10 +1,8 @@
-package cn.kunkun.binlog
+package cn.kunkun.add
 
+import cn.kunkun.add.ImplicitUtil.{str2Symbol, _}
 import cn.kunkun.calcite.SortType
 import com.github.shyiko.mysql.binlog.event.deserialization.ColumnType
-
-import ImplicitUtil._
-import ImplicitUtil.str2Symbol
 
 object Statistics {
 
@@ -65,7 +63,7 @@ object Statistics {
     def foreign: Statistic = unSupport()
 
     override def registerFrom(table: BTable): Statistic = new ForeignKey(columns, foreignColumns, foreignDB, foreignTB) {
-      private val db = if (foreignDB == null) table.databaseName else foreignDB
+      private val db: Symbol = if (foreignDB == null) table.schemaName else foreignDB
 
       override def getTable: BTable = table
 
@@ -219,10 +217,10 @@ object Statistics {
 
   def main(args: Array[String]): Unit = {
 
-    implicit val registry: Registry = new Registry("hello")
+    implicit val registry: BSchemaRegistry = new BSchemaRegistry("hello")
+    import ImplicitUtil._
 
-
-    val table = BTable("test", "user")(
+    val table1 = BTable("test", "user")(
       "id"     ->   "LONG",
       "name"   ->   ColumnType.VARCHAR,
       "age"    ->   ColumnType.INT24
@@ -232,11 +230,18 @@ object Statistics {
       ForeignKey("class", ("id", "user_id"))
     )
 
-    val table2 = BTable("test", "class")(
+    val table22 = BTable("test", "class")(
       "id"      ->  "LONG" ,
       "name"    ->  "VARCHAR",
       "user_id" ->  "LONG"
     )()
+    registry.setSchemaIfAbsent(new BSchema("test"))
+    registry.setTableIfAbsentAndGet(table1)
+    registry.setTableIfAbsentAndGet(table22)
+    println(registry)
+    println(registry.getSchema('test).get.showTables)
+    val table = registry.getTable('test, 'user).get
+    val table2 = registry.getTable('test, 'class).get
 
     val a = 'hafa
     println(a.getClass)

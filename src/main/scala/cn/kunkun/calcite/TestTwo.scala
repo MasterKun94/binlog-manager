@@ -1,18 +1,15 @@
 package cn.kunkun.calcite
 
+import cn.kunkun.binlog.ImplicitUtil.str2Symbol
+import cn.kunkun.binlog.Statistics.PrimaryKey
 import cn.kunkun.binlog._
+import cn.kunkun.calcite.ImplicitUtil._
 import com.github.shyiko.mysql.binlog.event.deserialization.ColumnType
 import org.apache.calcite.plan.RelOptUtil
-import org.apache.calcite.sql.parser.{SqlParser, SqlParserUtil}
-import org.apache.calcite.tools.Frameworks
-import ImplicitUtil._
-import cn.kunkun.binlog.Statistics.PrimaryKey
-import org.apache.calcite.adapter.enumerable.EnumerableTableScan
-import org.apache.calcite.rel.externalize.RelWriterImpl
 import org.apache.calcite.rel.logical.LogicalFilter
-import org.apache.calcite.sql.SqlDialect
 import org.apache.calcite.sql.dialect.CalciteSqlDialect
-import cn.kunkun.binlog.ImplicitUtil.str2Symbol
+import org.apache.calcite.sql.parser.SqlParser
+import org.apache.calcite.tools.Frameworks
 
 object TestTwo extends App {
 

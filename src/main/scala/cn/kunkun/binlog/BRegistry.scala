@@ -26,7 +26,7 @@ class Registry(name: String) {
   def registryUnknownTable(tableId: Long, array: Array[JSerializable]): BTable = {
     val columns = new Array[BColumn](array.length)
     columns.indices.foreach(i => columns(i) = BColumn(s"col_$i", ColumnType.NULL))
-    val ukTable = BTable.of('unknown_db, s"unknown_tb_$tableId", columns)
+    val ukTable = BTable.of('default, s"table_$tableId", columns)
     unknownTables.putIfAbsent(tableId, ukTable) match {
       case Some(table) => table
       case None => ukTable
@@ -36,8 +36,11 @@ class Registry(name: String) {
   def getOrRegistry(databaseName: Symbol, tableName: Symbol, tableId: Long)(newTable: => BTable): BTable = {
     tables.get(tableId) match {
       case Some(table) => table
-      case None => databases.get(databaseName).flatMap(_.getTable(tableName)) match {
+
+      case None =>
+        databases.get(databaseName).flatMap(_.getTable(tableName)) match {
         case Some(table) => tables.putIfAbsent(tableId, table).getOrElse(table)
+
         case None =>
           val newDB: Database = new Database(databaseName)
           val newTB: BTable = newTable
